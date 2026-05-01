@@ -52,7 +52,7 @@ I'm looking for movie recommendations. Here's my profile:
 - Current mood / vibe: ${mood || 'no preference'}
 - Movies I've already seen (don't recommend these): ${seenMovies?.join(', ') || 'none listed'}
 
-Recommend 6 movies. Return ONLY a valid JSON array, no markdown, no preamble.
+Recommend 12 movies. Return ONLY a valid JSON array, no markdown, no preamble.
     `.trim()
 
     const result = await chat.sendMessage(userMessage)
