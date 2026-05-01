@@ -1,36 +1,86 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+Reelwise 🎬<br>
+An AI-powered movie recommendation app built with Next.js. Tell it your mood, favourite genres, and movies you've already seen — it finds your next film. Also includes a full browse page with genre filtering, search, and sorting powered by the TMDB API.
+Live demo: https://movie-app-eta-ashy.vercel.app
 
-## Getting Started
+Features
 
-First, run the development server:
+AI Recommendations — multi-step onboarding (genres → mood → seen movies) feeds into Gemini 1.5 Flash, which returns 6 tailored picks with reasons
+Follow-up chat — refine results with natural language ("something shorter", "more recent")
+Browse & filter — explore movies by genre, sort by popularity/rating/newest, and search by title
+TMDB integration — posters, ratings, and metadata pulled live from The Movie Database
+Dark cinema aesthetic — deep background, gold accents, clean card layout
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Tech stack
+LayerTechFrameworkNext.js 15 (App Router)LanguageTypeScriptStylingTailwind CSSAIGoogle Gemini 1.5 FlashMovie dataTMDB APIDeploymentVercel
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Getting started
+1. Clone the repo
+bashgit clone https://github.com/kabzjose/movie-app.git
+cd movie-app
+2. Install dependencies
+bashpnpm install
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Don't have pnpm? Install it with npm install -g pnpm
 
-## Learn More
+3. Set up environment variables
+Copy the example env file and fill in your keys:
+bashcp .env.local.example .env.local
+envGEMINI_API_KEY=your_gemini_key_here
+TMDB_API_KEY=your_tmdb_key_here
+Getting your keys:
 
-To learn more about Next.js, take a look at the following resources:
+Gemini — free at aistudio.google.com → Get API Key. No credit card needed, 1,500 requests/day free.
+TMDB — free at themoviedb.org/settings/api → Create account → Request API key.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+4. Run the dev server
+bashpnpm dev
+Open http://localhost:3000.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Project structure
+my-movie-app/
+├── app/
+│   ├── layout.tsx              # Root layout — Nav + fonts
+│   ├── page.tsx                # Home / landing page
+│   ├── globals.css             # Global styles + CSS variables
+│   ├── chat/
+│   │   └── page.tsx            # AI recommendation flow (client)
+│   ├── browse/
+│   │   └── page.tsx            # Genre filter + movie grid (client)
+│   └── api/
+│       ├── recommend/
+│       │   └── route.ts        # Calls Gemini — server only
+│       └── tmdb-search/
+│           └── route.ts        # Proxies TMDB — server only
+├── components/
+│   ├── Nav.tsx                 # Top nav with active link highlighting
+│   └── MovieCard.tsx           # Poster, title, rating, genre badge
+└── lib/
+    └── tmdb.ts                 # TMDB helper functions
 
-## Deploy on Vercel
+Deploying to Vercel
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+Push your code to GitHub
+Import the repo at vercel.com/new
+Add environment variables in Settings → Environment Variables:
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+GEMINI_API_KEY
+TMDB_API_KEY
+
+
+Deploy — Vercel auto-detects Next.js, no config needed
+
+
+After adding env vars to an existing deployment, go to Deployments → Redeploy for them to take effect.
+
+
+How the AI integration works
+The app never exposes API keys to the browser. All AI calls go through a Next.js API route:
+Browser → POST /api/recommend → Gemini API
+                              ↓
+                        JSON array of 6 movies
+                              ↓
+              Each title looked up via /api/tmdb-search
+                              ↓
+                    Movie cards with posters
+The chat page maintains conversation history so follow-up messages have context from previous recommendations.
