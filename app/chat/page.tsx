@@ -77,7 +77,7 @@ export default function ChatPage() {
       setFollowUp('')
       setStep('results')
     } catch (e) {
-      setError('Something went wrong. Please try again.')
+      setError(e instanceof Error ? e.message : 'Something went wrong. Please try again.')
     } finally {
       setLoading(false)
     }
@@ -110,7 +110,7 @@ export default function ChatPage() {
     <div style={{ maxWidth: 760, margin: '0 auto' }}>
       <h1 style={{ fontSize: '1.75rem', fontWeight: 400, marginBottom: '0.5rem' }}>AI Recommendations</h1>
       <p style={{ color: 'var(--text-muted)', marginBottom: '2rem', fontSize: '0.95rem' }}>
-        Tell us a bit about yourself and we'll find the perfect films.
+        Tell us a bit about yourself and we&apos;ll find the perfect films.
       </p>
 
       {/* Step: Genres */}
@@ -135,7 +135,7 @@ export default function ChatPage() {
       {/* Step: Mood */}
       {step === 'mood' && (
         <div>
-          <h2 style={{ fontSize: '1.1rem', marginBottom: '1rem', fontWeight: 500 }}>What's your mood tonight?</h2>
+          <h2 style={{ fontSize: '1.1rem', marginBottom: '1rem', fontWeight: 500 }}>What&apos;s your mood tonight?</h2>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '2rem' }}>
             {MOOD_OPTIONS.map(m => (
               <button key={m} style={btnStyle(selectedMood === m)} onClick={() => setSelectedMood(m)}>{m}</button>
@@ -151,8 +151,8 @@ export default function ChatPage() {
       {/* Step: Seen movies */}
       {step === 'seen' && (
         <div>
-          <h2 style={{ fontSize: '1.1rem', marginBottom: '0.5rem', fontWeight: 500 }}>Movies you've already seen</h2>
-          <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', marginBottom: '1rem' }}>We'll make sure not to recommend these. Skip if you like.</p>
+          <h2 style={{ fontSize: '1.1rem', marginBottom: '0.5rem', fontWeight: 500 }}>Movies you&apos;ve already seen</h2>
+          <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', marginBottom: '1rem' }}>We&apos;ll make sure not to recommend these. Skip if you like.</p>
 
           <div style={{ display: 'flex', gap: '8px', marginBottom: '1rem' }}>
             <input

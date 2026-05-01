@@ -86,7 +86,7 @@ export default function BrowsePage() {
 					setTotalPages(Math.max(1, data.totalPages || 1))
 					setTotalResults(data.totalResults || 0)
 				}
-			} catch (e) {
+			} catch {
 				if (!isCancelled) {
 					setError('Could not load movies right now. Please try again.')
 					setMovies([])

@@ -15,7 +15,7 @@ export default function Home() {
           <span style={{ color: 'var(--accent)' }}>favourite film.</span>
         </h1>
         <p style={{ color: 'var(--text-muted)', marginTop: '1.25rem', fontSize: '1.1rem', maxWidth: 420 }}>
-          Tell us your mood, genres you love, and what you've already seen —
+          Tell us your mood, genres you love, and what you&apos;ve already seen —
           our AI does the rest.
         </p>
       </div>
