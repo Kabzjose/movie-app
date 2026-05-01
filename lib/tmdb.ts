@@ -16,7 +16,7 @@ export const GENRES: Record<string, number> = {
   Fantasy: 14,
 }
 
-function getTmdbKey() {
+function getTmdbToken() {
   const key = process.env.TMDB_API_KEY
 
   if (!key) {
@@ -27,7 +27,16 @@ function getTmdbKey() {
 }
 
 async function fetchTmdb(path: string, params: URLSearchParams) {
-  const res = await fetch(`${TMDB_BASE}${path}?${params}`)
+  const token = getTmdbToken()
+  const headers = new Headers()
+
+  if (token.startsWith('eyJ') || token.startsWith('Bearer ')) {
+    headers.set('Authorization', token.startsWith('Bearer ') ? token : `Bearer ${token}`)
+  } else {
+    params.set('api_key', token)
+  }
+
+  const res = await fetch(`${TMDB_BASE}${path}?${params}`, { headers })
   const data = await res.json()
 
   if (!res.ok) {
@@ -40,7 +49,6 @@ async function fetchTmdb(path: string, params: URLSearchParams) {
 
 export async function searchMovie(title: string, year?: number) {
   const params = new URLSearchParams({
-    api_key: getTmdbKey(),
     query: title,
     ...(year ? { year: String(year) } : {}),
   })
@@ -58,7 +66,6 @@ export async function discoverMovies({
   page?: number
 }) {
   const params = new URLSearchParams({
-    api_key: getTmdbKey(),
     sort_by: sortBy,
     page: String(page),
     ...(genreId ? { with_genres: String(genreId) } : {}),
@@ -68,7 +75,6 @@ export async function discoverMovies({
 
 export async function searchMoviesByQuery(query: string, page = 1) {
   const params = new URLSearchParams({
-    api_key: getTmdbKey(),
     query,
     page: String(page),
   })
