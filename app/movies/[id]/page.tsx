@@ -1,6 +1,7 @@
 import Image from 'next/image'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
+import TrailerPlayer from '../../../components/TrailerPlayer'
 import { getMovieDetails, TMDB_BACKDROP_BASE, TMDB_IMAGE_BASE } from '../../../lib/tmdb'
 
 interface CastMember {
@@ -173,22 +174,7 @@ export default async function MovieDetailPage({ params }: { params: Promise<{ id
             )}
 
             {trailer && (
-              <a
-                href={`https://www.youtube.com/watch?v=${trailer.key}`}
-                target="_blank"
-                rel="noreferrer"
-                style={{
-                  display: 'inline-block',
-                  background: 'var(--accent)',
-                  color: '#0a0a0f',
-                  borderRadius: '6px',
-                  padding: '0.75rem 1rem',
-                  fontWeight: 700,
-                  textDecoration: 'none',
-                }}
-              >
-                Watch trailer
-              </a>
+              <TrailerPlayer videoKey={trailer.key} title={movie.title} />
             )}
           </div>
         </div>
