@@ -14,6 +14,16 @@ function getUserId(session: { user?: { email?: string | null } } | null) {
   return session?.user?.email ?? undefined
 }
 
+function checkSupabaseEnv() {
+  const missing: string[] = []
+  if (!process.env.NEXT_PUBLIC_SUPABASE_URL) missing.push('NEXT_PUBLIC_SUPABASE_URL')
+  if (!process.env.SUPABASE_SERVICE_ROLE_KEY) missing.push('SUPABASE_SERVICE_ROLE_KEY')
+  if (missing.length > 0) {
+    return `Missing env: ${missing.join(', ')}`
+  }
+  return null
+}
+
 export async function GET() {
   try {
     const session = await auth()
@@ -21,6 +31,12 @@ export async function GET() {
 
     if (!userId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    const envError = checkSupabaseEnv()
+    if (envError) {
+      console.error('Watchlist env error:', envError)
+      return NextResponse.json({ error: envError }, { status: 500 })
     }
 
     const supabase = createSupabaseServerClient()
@@ -56,6 +72,12 @@ export async function POST(req: NextRequest) {
 
     if (!userId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    const envError = checkSupabaseEnv()
+    if (envError) {
+      console.error('Watchlist env error:', envError)
+      return NextResponse.json({ error: envError }, { status: 500 })
     }
 
     const body = await req.json() as WatchlistPayload
@@ -96,6 +118,12 @@ export async function DELETE(req: NextRequest) {
 
     if (!userId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    const envError = checkSupabaseEnv()
+    if (envError) {
+      console.error('Watchlist env error:', envError)
+      return NextResponse.json({ error: envError }, { status: 500 })
     }
 
     const { searchParams } = new URL(req.url)
