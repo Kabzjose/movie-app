@@ -1,16 +1,17 @@
 'use client'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import MovieCard from '../../components/MovieCard'
 
 const GENRE_OPTIONS = ['Action', 'Comedy', 'Drama', 'Horror', 'Romance', 'Sci-Fi', 'Thriller', 'Animation', 'Documentary', 'Fantasy']
 const MOOD_OPTIONS = ['Something light & fun', 'Deep and emotional', 'Edge-of-seat tense', 'Mind-bending', 'Feel-good', 'Dark and gritty']
 
 interface Recommendation {
+  clientKey?: string
   id?: number
   title: string
-  year: number
-  reason: string
-  genres: string[]
+  year?: number
+  reason?: string
+  genres?: string[]
   posterPath?: string | null
   rating?: number
 }
@@ -26,6 +27,7 @@ export default function ChatPage() {
   const [recommendations, setRecommendations] = useState<Recommendation[]>([])
   const [history, setHistory] = useState<{ role: string; content: string }[]>([])
   const [followUp, setFollowUp] = useState('')
+  const [candidates, setCandidates] = useState<string[] | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
 
@@ -40,11 +42,40 @@ export default function ChatPage() {
     setSeenInput('')
   }
 
+  const enrichRecommendation = async (rec: Recommendation, clientKey: string) => {
+    try {
+      const tmdbRes = await fetch(
+        `/api/tmdb-search?title=${encodeURIComponent(rec.title)}${rec.year ? `&year=${rec.year}` : ''}`
+      )
+      const tmdb = await tmdbRes.json()
+
+      setRecommendations((prev) => prev.map((movie) => {
+        if (movie.clientKey !== clientKey) return movie
+
+        return {
+          ...movie,
+          id: tmdb.id,
+          year: movie.year ?? (tmdb.release_date ? Number(tmdb.release_date.slice(0, 4)) : undefined),
+          posterPath: tmdb.poster_path ?? null,
+          rating: tmdb.vote_average ?? null,
+        }
+      }))
+    } catch {
+      // Keep the streamed text-only recommendation if TMDB enrichment fails.
+    }
+  }
+
   const fetchRecommendations = async (isFollowUp = false) => {
     setLoading(true)
     setError('')
+    setRecommendations([])
+    setStep('results')
+
+    const streamedRecommendations: Recommendation[] = []
+
     try {
-      const res = await fetch('/api/recommend', {
+      // include candidate list to avoid hallucination when available
+      const res = await fetch('/api/recommend/stream', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -53,36 +84,88 @@ export default function ChatPage() {
           seenMovies,
           followUp: isFollowUp ? followUp : undefined,
           history: isFollowUp ? history : [],
+          candidates: candidates ?? undefined,
         }),
       })
-      const data = await res.json()
-      if (data.error) throw new Error(data.error)
 
-      // Enrich with TMDB poster data
-      const enriched = await Promise.all(
-        data.recommendations.map(async (rec: Recommendation) => {
-          try {
-            const tmdbRes = await fetch(
-              `/api/tmdb-search?title=${encodeURIComponent(rec.title)}&year=${rec.year}`
-            )
-            const tmdb = await tmdbRes.json()
-            return { ...rec, id: tmdb.id, posterPath: tmdb.poster_path ?? null, rating: tmdb.vote_average ?? null }
-          } catch {
-            return rec
+      if (!res.ok) {
+        const json = await res.json().catch(() => null)
+        throw new Error(json?.error || 'Failed to fetch recommendations')
+      }
+
+      const reader = res.body?.getReader()
+      const decoder = new TextDecoder()
+
+      if (!reader) {
+        throw new Error('Streaming is not available in this browser')
+      }
+
+      const appendRecommendation = (line: string) => {
+        const trimmed = line.trim()
+
+        if (!trimmed) return
+
+        const parsed = JSON.parse(trimmed) as Recommendation | string
+        const rec = typeof parsed === 'string' ? { title: parsed } : parsed
+
+        if (!rec.title) return
+
+        const clientKey = `${Date.now()}-${streamedRecommendations.length}-${rec.title}`
+        const movie = { ...rec, clientKey }
+
+        streamedRecommendations.push(rec)
+        setRecommendations((prev) => [...prev, movie])
+        void enrichRecommendation(movie, clientKey)
+      }
+
+      let buffer = ''
+      let done = false
+
+      while (!done) {
+        const { value, done: streamDone } = await reader.read()
+        done = streamDone
+
+        if (value) {
+          buffer += decoder.decode(value, { stream: !streamDone })
+
+          const lines = buffer.split(/\r?\n/)
+          buffer = lines.pop() ?? ''
+
+          for (const line of lines) {
+            appendRecommendation(line)
           }
-        })
-      )
+        }
+      }
 
-      setRecommendations(enriched)
-      setHistory(data.history)
+      buffer += decoder.decode()
+      appendRecommendation(buffer)
+
+      if (streamedRecommendations.length === 0) {
+        throw new Error('No recommendations were returned')
+      }
+
+      const userMessage = isFollowUp ? followUp : `I'm looking for movie recommendations. Favourite genres: ${selectedGenres.join(', ')}; Mood: ${selectedMood}. Seen: ${seenMovies.join(', ')}`
+      const updatedHistory = [
+        ...(history ?? []),
+        { role: 'user', content: userMessage },
+        { role: 'assistant', content: streamedRecommendations.map((rec) => JSON.stringify(rec)).join('\n') },
+      ]
+      setHistory(updatedHistory)
       setFollowUp('')
-      setStep('results')
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Something went wrong. Please try again.')
     } finally {
       setLoading(false)
     }
   }
+
+  useEffect(() => {
+    // load public candidates list once
+    fetch('/candidates.json')
+      .then(r => r.json())
+      .then(list => setCandidates(list))
+      .catch(() => setCandidates(null))
+  }, [])
 
   const btnStyle = (active = false) => ({
     padding: '0.5rem 1.25rem',
@@ -187,6 +270,13 @@ export default function ChatPage() {
 
           {error && <p style={{ color: '#e05a5a', marginBottom: '1rem', fontSize: '0.875rem' }}>{error}</p>}
 
+          {loading && (
+            <div style={{ background: 'var(--surface)', padding: '0.75rem', borderRadius: '6px', border: '1px solid var(--border)', marginBottom: '1rem', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
+              <span className="spinner" aria-hidden="true" />
+              <span>Finding films that fit your taste...</span>
+            </div>
+          )}
+
           <div style={{ display: 'flex', gap: '1rem' }}>
             <button style={{ ...primaryBtn, background: 'transparent', border: '1px solid var(--border)', color: 'var(--text-muted)' }} onClick={() => setStep('mood')}>← Back</button>
             <button style={primaryBtn} onClick={() => fetchRecommendations(false)} disabled={loading}>
@@ -208,9 +298,18 @@ export default function ChatPage() {
 
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: '1rem', marginBottom: '2rem' }}>
             {recommendations.map(rec => (
-              <MovieCard key={rec.id ?? rec.title} id={rec.id} title={rec.title} year={rec.year} posterPath={rec.posterPath} rating={rec.rating} genres={rec.genres} reason={rec.reason} />
+              <MovieCard key={rec.clientKey ?? rec.id ?? rec.title} id={rec.id} title={rec.title} year={rec.year} posterPath={rec.posterPath} rating={rec.rating} genres={rec.genres} reason={rec.reason} />
             ))}
           </div>
+
+          {loading && (
+            <div style={{ color: 'var(--text-muted)', marginBottom: '2rem', display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
+              <span className="spinner" aria-hidden="true" />
+              <span>Streaming recommendations...</span>
+            </div>
+          )}
+
+          {error && <p style={{ color: '#e05a5a', marginBottom: '1rem', fontSize: '0.875rem' }}>{error}</p>}
 
           {/* Follow-up chat */}
           <div style={{ borderTop: '1px solid var(--border)', paddingTop: '1.5rem' }}>

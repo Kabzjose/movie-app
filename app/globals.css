@@ -19,3 +19,20 @@ body {
   font-family: 'Georgia', 'Times New Roman', serif;
   min-height: 100vh;
 }
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.spinner {
+  width: 18px;
+  height: 18px;
+  border: 2px solid var(--border);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  display: inline-block;
+  flex: 0 0 auto;
+  animation: spin 0.75s linear infinite;
+}
