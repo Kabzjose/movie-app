@@ -9,6 +9,7 @@ export default function Nav() {
     { href: '/', label: 'Home' },
     { href: '/chat', label: 'AI Picks' },
     { href: '/browse', label: 'Browse' },
+    { href: '/watchlist', label: 'Watchlist' },
   ]
 
   return (

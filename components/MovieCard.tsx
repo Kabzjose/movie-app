@@ -1,6 +1,9 @@
+'use client'
+
 import Image from 'next/image'
 import Link from 'next/link'
 import { TMDB_IMAGE_BASE } from '../lib/tmdb'
+import WatchlistButton from './WatchlistButton'
 
 interface MovieCardProps {
   id?: number
@@ -15,21 +18,8 @@ interface MovieCardProps {
 
 export default function MovieCard({ id, title, year, posterPath, rating, genres, reason, onClick }: MovieCardProps) {
   const isClickable = Boolean(id || onClick)
-  const card = (
-    <div
-      onClick={onClick}
-      style={{
-        background: 'var(--surface)',
-        border: '1px solid var(--border)',
-        borderRadius: '8px',
-        overflow: 'hidden',
-        cursor: isClickable ? 'pointer' : 'default',
-        transition: 'border-color 0.15s',
-        height: '100%',
-      }}
-      onMouseEnter={e => isClickable && ((e.currentTarget as HTMLDivElement).style.borderColor = 'var(--accent)')}
-      onMouseLeave={e => isClickable && ((e.currentTarget as HTMLDivElement).style.borderColor = 'var(--border)')}
-    >
+  const content = (
+    <>
       {/* Poster */}
       <div style={{ aspectRatio: '2/3', background: 'var(--surface-2)', position: 'relative' }}>
         {posterPath ? (
@@ -81,16 +71,40 @@ export default function MovieCard({ id, title, year, posterPath, rating, genres,
           </p>
         )}
       </div>
-    </div>
+    </>
   )
 
-  if (!id) {
-    return card
-  }
-
   return (
-    <Link href={`/movies/${id}`} style={{ color: 'inherit', textDecoration: 'none', display: 'block', height: '100%' }}>
-      {card}
-    </Link>
+    <div
+      onClick={onClick}
+      style={{
+        background: 'var(--surface)',
+        border: '1px solid var(--border)',
+        borderRadius: '8px',
+        overflow: 'hidden',
+        cursor: isClickable ? 'pointer' : 'default',
+        transition: 'border-color 0.15s',
+        height: '100%',
+        display: 'flex',
+        flexDirection: 'column',
+      }}
+      onMouseEnter={e => isClickable && ((e.currentTarget as HTMLDivElement).style.borderColor = 'var(--accent)')}
+      onMouseLeave={e => isClickable && ((e.currentTarget as HTMLDivElement).style.borderColor = 'var(--border)')}
+    >
+      {id ? (
+        <Link href={`/movies/${id}`} style={{ color: 'inherit', textDecoration: 'none', display: 'block', flex: 1 }}>
+          {content}
+        </Link>
+      ) : content}
+
+      {id && (
+        <div style={{ padding: '0 0.75rem 0.75rem', marginTop: 'auto' }}>
+          <WatchlistButton
+            compact
+            movie={{ id, title, year, posterPath, rating, genres }}
+          />
+        </div>
+      )}
+    </div>
   )
 }

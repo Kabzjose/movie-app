@@ -2,6 +2,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import TrailerPlayer from '../../../components/TrailerPlayer'
+import WatchlistButton from '../../../components/WatchlistButton'
 import { getMovieDetails, TMDB_BACKDROP_BASE, TMDB_IMAGE_BASE } from '../../../lib/tmdb'
 
 interface CastMember {
@@ -176,6 +177,19 @@ export default async function MovieDetailPage({ params }: { params: Promise<{ id
             {trailer && (
               <TrailerPlayer videoKey={trailer.key} title={movie.title} />
             )}
+
+            <div style={{ marginTop: trailer ? '1rem' : 0 }}>
+              <WatchlistButton
+                movie={{
+                  id: Number(id),
+                  title: movie.title,
+                  year: releaseYear ? Number(releaseYear) : undefined,
+                  posterPath: movie.poster_path,
+                  rating: movie.vote_average,
+                  genres: movie.genres?.map((genre) => genre.name),
+                }}
+              />
+            </div>
           </div>
         </div>
       </section>
