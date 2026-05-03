@@ -6,6 +6,7 @@ const GENRE_OPTIONS = ['Action', 'Comedy', 'Drama', 'Horror', 'Romance', 'Sci-Fi
 const MOOD_OPTIONS = ['Something light & fun', 'Deep and emotional', 'Edge-of-seat tense', 'Mind-bending', 'Feel-good', 'Dark and gritty']
 
 interface Recommendation {
+  id?: number
   title: string
   year: number
   reason: string
@@ -65,7 +66,7 @@ export default function ChatPage() {
               `/api/tmdb-search?title=${encodeURIComponent(rec.title)}&year=${rec.year}`
             )
             const tmdb = await tmdbRes.json()
-            return { ...rec, posterPath: tmdb.poster_path ?? null, rating: tmdb.vote_average ?? null }
+            return { ...rec, id: tmdb.id, posterPath: tmdb.poster_path ?? null, rating: tmdb.vote_average ?? null }
           } catch {
             return rec
           }
@@ -207,7 +208,7 @@ export default function ChatPage() {
 
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: '1rem', marginBottom: '2rem' }}>
             {recommendations.map(rec => (
-              <MovieCard key={rec.title} title={rec.title} year={rec.year} posterPath={rec.posterPath} rating={rec.rating} genres={rec.genres} reason={rec.reason} />
+              <MovieCard key={rec.id ?? rec.title} id={rec.id} title={rec.title} year={rec.year} posterPath={rec.posterPath} rating={rec.rating} genres={rec.genres} reason={rec.reason} />
             ))}
           </div>
 

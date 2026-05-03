@@ -258,6 +258,7 @@ export default function BrowsePage() {
 					{movies.map((movie) => (
 						<MovieCard
 							key={movie.id}
+							id={movie.id}
 							title={movie.title}
 							year={movie.release_date ? Number(movie.release_date.slice(0, 4)) : undefined}
 							posterPath={movie.poster_path}

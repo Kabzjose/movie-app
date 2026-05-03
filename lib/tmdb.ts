@@ -1,6 +1,7 @@
 const TMDB_BASE = 'https://api.themoviedb.org/3'
 
 export const TMDB_IMAGE_BASE = 'https://image.tmdb.org/t/p/w500'
+export const TMDB_BACKDROP_BASE = 'https://image.tmdb.org/t/p/w1280'
 
 // Genre ID map — fetch fresh list via /genre/movie/list if needed
 export const GENRES: Record<string, number> = {
@@ -79,4 +80,12 @@ export async function searchMoviesByQuery(query: string, page = 1) {
     page: String(page),
   })
   return fetchTmdb('/search/movie', params)
+}
+
+export async function getMovieDetails(id: string | number) {
+  const params = new URLSearchParams({
+    append_to_response: 'credits,videos',
+  })
+
+  return fetchTmdb(`/movie/${id}`, params)
 }

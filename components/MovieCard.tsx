@@ -1,7 +1,9 @@
 import Image from 'next/image'
+import Link from 'next/link'
 import { TMDB_IMAGE_BASE } from '../lib/tmdb'
 
 interface MovieCardProps {
+  id?: number
   title: string
   year?: number
   posterPath?: string | null
@@ -11,8 +13,9 @@ interface MovieCardProps {
   onClick?: () => void
 }
 
-export default function MovieCard({ title, year, posterPath, rating, genres, reason, onClick }: MovieCardProps) {
-  return (
+export default function MovieCard({ id, title, year, posterPath, rating, genres, reason, onClick }: MovieCardProps) {
+  const isClickable = Boolean(id || onClick)
+  const card = (
     <div
       onClick={onClick}
       style={{
@@ -20,11 +23,12 @@ export default function MovieCard({ title, year, posterPath, rating, genres, rea
         border: '1px solid var(--border)',
         borderRadius: '8px',
         overflow: 'hidden',
-        cursor: onClick ? 'pointer' : 'default',
+        cursor: isClickable ? 'pointer' : 'default',
         transition: 'border-color 0.15s',
+        height: '100%',
       }}
-      onMouseEnter={e => onClick && ((e.currentTarget as HTMLDivElement).style.borderColor = 'var(--accent)')}
-      onMouseLeave={e => onClick && ((e.currentTarget as HTMLDivElement).style.borderColor = 'var(--border)')}
+      onMouseEnter={e => isClickable && ((e.currentTarget as HTMLDivElement).style.borderColor = 'var(--accent)')}
+      onMouseLeave={e => isClickable && ((e.currentTarget as HTMLDivElement).style.borderColor = 'var(--border)')}
     >
       {/* Poster */}
       <div style={{ aspectRatio: '2/3', background: 'var(--surface-2)', position: 'relative' }}>
@@ -78,5 +82,15 @@ export default function MovieCard({ title, year, posterPath, rating, genres, rea
         )}
       </div>
     </div>
+  )
+
+  if (!id) {
+    return card
+  }
+
+  return (
+    <Link href={`/movies/${id}`} style={{ color: 'inherit', textDecoration: 'none', display: 'block', height: '100%' }}>
+      {card}
+    </Link>
   )
 }
