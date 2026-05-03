@@ -1,28 +1,13 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { signIn, useSession } from 'next-auth/react'
 import MovieCard from '../../components/MovieCard'
-import {
-  getWatchlist,
-  WATCHLIST_UPDATED_EVENT,
-  type WatchlistMovie,
-} from '../../lib/watchlist'
+import { useWatchlist } from '../../lib/useWatchlist'
 
 export default function WatchlistPage() {
-  const [movies, setMovies] = useState<WatchlistMovie[]>([])
-
-  useEffect(() => {
-    const syncWatchlist = () => setMovies(getWatchlist())
-
-    syncWatchlist()
-    window.addEventListener(WATCHLIST_UPDATED_EVENT, syncWatchlist)
-    window.addEventListener('storage', syncWatchlist)
-
-    return () => {
-      window.removeEventListener(WATCHLIST_UPDATED_EVENT, syncWatchlist)
-      window.removeEventListener('storage', syncWatchlist)
-    }
-  }, [])
+  const { data: session } = useSession()
+  const { watchlist } = useWatchlist()
+  const isSignedOut = !session?.user?.email
 
   return (
     <div style={{ maxWidth: 1120, margin: '0 auto' }}>
@@ -33,7 +18,42 @@ export default function WatchlistPage() {
         Movies you saved for later.
       </p>
 
-      {movies.length === 0 ? (
+      {isSignedOut && (
+        <div
+          style={{
+            border: '1px solid var(--border)',
+            background: 'var(--surface)',
+            borderRadius: '8px',
+            padding: '1rem',
+            color: 'var(--text-muted)',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            gap: '1rem',
+            marginBottom: '1.5rem',
+          }}
+        >
+          <span>Sign in to sync your watchlist across devices.</span>
+          <button
+            type="button"
+            onClick={() => signIn('google')}
+            style={{
+              background: 'var(--accent)',
+              color: '#0a0a0f',
+              border: 'none',
+              borderRadius: '6px',
+              padding: '0.6rem 0.9rem',
+              fontWeight: 700,
+              cursor: 'pointer',
+              whiteSpace: 'nowrap',
+            }}
+          >
+            Sign in
+          </button>
+        </div>
+      )}
+
+      {watchlist.length === 0 ? (
         <div
           style={{
             border: '1px solid var(--border)',
@@ -53,7 +73,7 @@ export default function WatchlistPage() {
             gap: '1rem',
           }}
         >
-          {movies.map((movie) => (
+          {watchlist.map((movie) => (
             <MovieCard
               key={movie.id}
               id={movie.id}

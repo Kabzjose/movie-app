@@ -1,12 +1,9 @@
 'use client'
 
-import { useEffect, useState } from 'react'
 import {
-  isInWatchlist,
-  toggleWatchlist,
-  WATCHLIST_UPDATED_EVENT,
+  useWatchlist,
   type WatchlistMovie,
-} from '../lib/watchlist'
+} from '../lib/useWatchlist'
 
 interface WatchlistButtonProps {
   movie: WatchlistMovie
@@ -14,25 +11,15 @@ interface WatchlistButtonProps {
 }
 
 export default function WatchlistButton({ movie, compact = false }: WatchlistButtonProps) {
-  const [saved, setSaved] = useState(false)
-
-  useEffect(() => {
-    const syncSavedState = () => setSaved(isInWatchlist(movie.id))
-
-    syncSavedState()
-    window.addEventListener(WATCHLIST_UPDATED_EVENT, syncSavedState)
-    window.addEventListener('storage', syncSavedState)
-
-    return () => {
-      window.removeEventListener(WATCHLIST_UPDATED_EVENT, syncSavedState)
-      window.removeEventListener('storage', syncSavedState)
-    }
-  }, [movie.id])
+  const { toggleWatchlist, isInWatchlist } = useWatchlist()
+  const saved = isInWatchlist(movie.id)
 
   return (
     <button
       type="button"
-      onClick={() => setSaved(toggleWatchlist(movie))}
+      onClick={() => {
+        void toggleWatchlist(movie)
+      }}
       aria-pressed={saved}
       style={{
         width: compact ? '100%' : 'auto',
