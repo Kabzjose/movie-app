@@ -44,15 +44,11 @@ export function useWatchlist() {
       return
     }
 
-    const res = await fetch('/api/watchlist')
+    const res = await fetch('/api/watchlist').catch(() => null)
 
-    if (res.status === 401) {
+    if (!res || res.status === 401 || !res.ok) {
       setWatchlist(readLocalWatchlist())
       return
-    }
-
-    if (!res.ok) {
-      throw new Error('Failed to load watchlist')
     }
 
     const data = await res.json() as { watchlist?: WatchlistMovie[] }
@@ -114,13 +110,19 @@ export function useWatchlist() {
         })
 
     if (res.status === 401) {
-      writeLocalWatchlist(nextWatchlist)
+      // Session appears invalid; persist the optimistic change to localStorage
+      // but do not dispatch the global update event (which triggers a server reload)
+      try {
+        window.localStorage.setItem(WATCHLIST_STORAGE_KEY, JSON.stringify(nextWatchlist))
+      } catch {}
       return !currentlySaved
     }
 
     if (!res.ok) {
+      // Revert UI to the previous watchlist and keep localStorage consistent
       setWatchlist(watchlist)
-      throw new Error('Failed to update watchlist')
+      writeLocalWatchlist(watchlist)
+      return !currentlySaved
     }
 
     window.dispatchEvent(new Event(WATCHLIST_UPDATED_EVENT))
