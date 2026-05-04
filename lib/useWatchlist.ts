@@ -36,8 +36,11 @@ export function useWatchlist() {
   const [watchlist, setWatchlist] = useState<WatchlistMovie[]>([])
   const isSignedIn = Boolean(session?.user?.email)
 
+  const userId = session?.user?.email ?? null
+
   const loadWatchlist = useCallback(async () => {
     if (status === 'loading') return
+    if (userId === null && isSignedIn) return  // wait until userId is stable
 
     if (!isSignedIn) {
       setWatchlist(readLocalWatchlist())
@@ -53,7 +56,8 @@ export function useWatchlist() {
 
     const data = await res.json() as { watchlist?: WatchlistMovie[] }
     setWatchlist(data.watchlist ?? [])
-  }, [isSignedIn, status])
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [status, userId])  // isSignedIn intentionally omitted — userId covers it
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -61,10 +65,11 @@ export function useWatchlist() {
   }, [loadWatchlist])
 
   useEffect(() => {
+    // When signed in, state is managed optimistically in toggleWatchlist —
+    // do NOT re-fetch from the server here or we risk wiping optimistic updates.
+    // For guests, keep localStorage in sync across tabs.
     const syncWatchlist = () => {
-      if (isSignedIn) {
-        void loadWatchlist()
-      } else {
+      if (!isSignedIn) {
         setWatchlist(readLocalWatchlist())
       }
     }
@@ -76,7 +81,7 @@ export function useWatchlist() {
       window.removeEventListener(WATCHLIST_UPDATED_EVENT, syncWatchlist)
       window.removeEventListener('storage', syncWatchlist)
     }
-  }, [isSignedIn, loadWatchlist])
+  }, [isSignedIn])
 
   const isInWatchlist = useCallback((movieId: number) => {
     return watchlist.some((movie) => movie.id === movieId)
