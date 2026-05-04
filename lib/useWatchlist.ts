@@ -125,7 +125,7 @@ export function useWatchlist() {
       return !currentlySaved
     }
 
-    window.dispatchEvent(new Event(WATCHLIST_UPDATED_EVENT))
+  
     return !currentlySaved
   }, [isSignedIn, watchlist])
 
