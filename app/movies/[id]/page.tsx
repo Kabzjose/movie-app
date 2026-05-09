@@ -3,7 +3,7 @@ import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import TrailerPlayer from '../../../components/TrailerPlayer'
 import WatchlistButton from '../../../components/WatchlistButton'
-import { getMovieDetails, TMDB_BACKDROP_BASE, TMDB_IMAGE_BASE } from '../../../lib/tmdb'
+import { getMovieDetails, TMDB_BACKDROP_BASE, TMDB_IMAGE_BASE, TMDB_PROFILE_BASE } from '../../../lib/tmdb'
 
 interface CastMember {
   id: number
@@ -202,7 +202,17 @@ export default async function MovieDetailPage({ params }: { params: Promise<{ id
               <div key={person.id} style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '8px', overflow: 'hidden' }}>
                 <div style={{ aspectRatio: '2/3', position: 'relative', background: 'var(--surface-2)' }}>
                   {person.profile_path ? (
-                    <Image src={`${TMDB_IMAGE_BASE}${person.profile_path}`} alt={person.name} fill sizes="150px" style={{ objectFit: 'cover' }} />
+                    <Image
+                      src={`${TMDB_PROFILE_BASE}${person.profile_path}`}
+                      alt={person.name}
+                      fill
+                      loading="lazy"
+                      decoding="async"
+                      quality={72}
+                      // Cast thumbnails render small; w185 avoids downloading poster-sized profile images.
+                      sizes="(max-width: 640px) 30vw, 150px"
+                      style={{ objectFit: 'cover' }}
+                    />
                   ) : (
                     <div style={{ height: '100%', display: 'grid', placeItems: 'center', color: 'var(--text-muted)', textAlign: 'center', padding: '0.5rem' }}>
                       No photo

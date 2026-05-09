@@ -16,7 +16,39 @@ interface Recommendation {
   rating?: number
 }
 
+interface TmdbSearchResult {
+  id?: number
+  poster_path?: string | null
+  vote_average?: number | null
+  release_date?: string | null
+}
+
 type Step = 'genres' | 'mood' | 'seen' | 'results'
+
+const tmdbEnrichmentCache = new Map<string, Promise<TmdbSearchResult>>()
+
+function getTmdbEnrichment(rec: Recommendation) {
+  const cacheKey = `${rec.title.toLowerCase()}::${rec.year ?? ''}`
+  const cached = tmdbEnrichmentCache.get(cacheKey)
+
+  if (cached) return cached
+
+  // De-dupe poster enrichment so repeated streamed titles/follow-ups reuse one network request.
+  const request = fetch(
+    `/api/tmdb-search?title=${encodeURIComponent(rec.title)}${rec.year ? `&year=${rec.year}` : ''}`
+  )
+    .then((tmdbRes) => {
+      if (!tmdbRes.ok) throw new Error('TMDB enrichment failed')
+      return tmdbRes.json() as Promise<TmdbSearchResult>
+    })
+    .catch((error) => {
+      tmdbEnrichmentCache.delete(cacheKey)
+      throw error
+    })
+
+  tmdbEnrichmentCache.set(cacheKey, request)
+  return request
+}
 
 export default function ChatPage() {
   const [step, setStep] = useState<Step>('genres')
@@ -44,10 +76,7 @@ export default function ChatPage() {
 
   const enrichRecommendation = async (rec: Recommendation, clientKey: string) => {
     try {
-      const tmdbRes = await fetch(
-        `/api/tmdb-search?title=${encodeURIComponent(rec.title)}${rec.year ? `&year=${rec.year}` : ''}`
-      )
-      const tmdb = await tmdbRes.json()
+      const tmdb = await getTmdbEnrichment(rec)
 
       setRecommendations((prev) => prev.map((movie) => {
         if (movie.clientKey !== clientKey) return movie
@@ -57,7 +86,7 @@ export default function ChatPage() {
           id: tmdb.id,
           year: movie.year ?? (tmdb.release_date ? Number(tmdb.release_date.slice(0, 4)) : undefined),
           posterPath: tmdb.poster_path ?? null,
-          rating: tmdb.vote_average ?? null,
+          rating: tmdb.vote_average ?? undefined,
         }
       }))
     } catch {

@@ -17,7 +17,13 @@ export async function GET(req: NextRequest) {
     const movie = await searchMovie(title, year)
 
     if (!movie) {
-      return NextResponse.json({}, { status: 200 })
+      return NextResponse.json({}, {
+        status: 200,
+        // Cache misses briefly so repeated AI enrichment does not hammer TMDB.
+        headers: {
+          'Cache-Control': 'public, s-maxage=300, stale-while-revalidate=3600',
+        },
+      })
     }
 
     return NextResponse.json({
@@ -27,6 +33,11 @@ export async function GET(req: NextRequest) {
       vote_average: movie.vote_average ?? null,
       release_date: movie.release_date ?? null,
       overview: movie.overview ?? null,
+    }, {
+      // Enrichment requests are often repeated across follow-ups; cache by title/year URL.
+      headers: {
+        'Cache-Control': 'public, s-maxage=300, stale-while-revalidate=3600',
+      },
     })
   } catch (err) {
     console.error('TMDB search route error:', err)

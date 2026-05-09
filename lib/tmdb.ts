@@ -1,6 +1,8 @@
 const TMDB_BASE = 'https://api.themoviedb.org/3'
 
 export const TMDB_IMAGE_BASE = 'https://image.tmdb.org/t/p/w500'
+export const TMDB_POSTER_CARD_BASE = 'https://image.tmdb.org/t/p/w342'
+export const TMDB_PROFILE_BASE = 'https://image.tmdb.org/t/p/w185'
 export const TMDB_BACKDROP_BASE = 'https://image.tmdb.org/t/p/w1280'
 
 // Genre ID map — fetch fresh list via /genre/movie/list if needed
@@ -18,7 +20,7 @@ export const GENRES: Record<string, number> = {
 }
 
 function getTmdbToken() {
-  const key = process.env.TMDB_API_KEY
+  const key = process.env['TMDB_API_KEY']
 
   if (!key) {
     throw new Error('Missing TMDB_API_KEY on the server')
@@ -37,7 +39,9 @@ async function fetchTmdb(path: string, params: URLSearchParams) {
     params.set('api_key', token)
   }
 
-  const res = await fetch(`${TMDB_BASE}${path}?${params}`, { headers })
+  const url = `${TMDB_BASE}${path}?${params}`
+  // Cache stable TMDB metadata server-side so repeated searches/pages avoid a fresh upstream request.
+  const res = await fetch(url, { headers, next: { revalidate: 60 * 60 } })
   const data = await res.json()
 
   if (!res.ok) {

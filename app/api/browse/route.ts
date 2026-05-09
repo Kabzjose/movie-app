@@ -31,6 +31,11 @@ export async function GET(req: NextRequest) {
       page: data.page ?? page,
       totalPages: Math.min(data.total_pages ?? 1, 500),
       totalResults: data.total_results ?? 0,
+    }, {
+      // Movie discovery/search data changes slowly; CDN/browser caching prevents repeated identical fetches.
+      headers: {
+        'Cache-Control': 'public, s-maxage=300, stale-while-revalidate=3600',
+      },
     })
   } catch (err) {
     console.error('Browse API error:', err)

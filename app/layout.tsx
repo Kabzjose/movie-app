@@ -11,6 +11,10 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
+      <head>
+        {/* Warm the TMDB image CDN connection before result posters enter the viewport. */}
+        <link rel="preconnect" href="https://image.tmdb.org" crossOrigin="" />
+      </head>
       <body>
         <SessionProvider>
           <Nav />

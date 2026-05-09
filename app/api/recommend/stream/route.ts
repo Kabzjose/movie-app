@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from 'next/server'
 
 export async function POST(req: NextRequest) {
   try {
-    const geminiKey = process.env.GEMINI_API_KEY
+    const geminiKey = process.env['GEMINI_API_KEY']
 
     if (!geminiKey) {
       return NextResponse.json({ error: 'Missing GEMINI_API_KEY on the server' }, { status: 500 })
@@ -11,7 +11,7 @@ export async function POST(req: NextRequest) {
 
     const genAI = new GoogleGenerativeAI(geminiKey)
     const model = genAI.getGenerativeModel({
-      model: process.env.GEMINI_MODEL ?? 'gemini-2.5-flash',
+      model: process.env['GEMINI_MODEL'] ?? 'gemini-2.5-flash',
       systemInstruction: `You are a world-class film critic and recommendation engine with encyclopedic knowledge of cinema.
 Always respond as NDJSON only: one compact JSON object per line.
 Do not return a JSON array. Do not use markdown fences. Do not add explanations outside JSON.

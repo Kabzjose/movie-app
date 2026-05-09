@@ -20,7 +20,7 @@ function extractJsonArray(text: string) {
 
 export async function POST(req: NextRequest) {
   try {
-    const geminiKey = process.env.GEMINI_API_KEY
+    const geminiKey = process.env['GEMINI_API_KEY']
 
     if (!geminiKey) {
       return NextResponse.json({ error: 'Missing GEMINI_API_KEY on the server' }, { status: 500 })
@@ -29,7 +29,7 @@ export async function POST(req: NextRequest) {
     // Runs on the SERVER only — GEMINI_API_KEY never reaches the browser
     const genAI = new GoogleGenerativeAI(geminiKey)
     const model = genAI.getGenerativeModel({
-      model: process.env.GEMINI_MODEL ?? 'gemini-2.5-flash',
+      model: process.env['GEMINI_MODEL'] ?? 'gemini-2.5-flash',
       systemInstruction: `You are a world-class film critic and recommendation engine with encyclopedic knowledge of cinema.
 Always respond with a valid JSON array only — no markdown fences, no explanations outside the JSON.
 Format: [{ "title": string, "year": number, "reason": string, "genres": string[] }]`,

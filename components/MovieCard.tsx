@@ -1,8 +1,9 @@
 'use client'
 
+import { memo } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
-import { TMDB_IMAGE_BASE } from '../lib/tmdb'
+import { TMDB_POSTER_CARD_BASE } from '../lib/tmdb'
 import WatchlistButton from './WatchlistButton'
 
 interface MovieCardProps {
@@ -16,7 +17,7 @@ interface MovieCardProps {
   onClick?: () => void
 }
 
-export default function MovieCard({ id, title, year, posterPath, rating, genres, reason, onClick }: MovieCardProps) {
+function MovieCard({ id, title, year, posterPath, rating, genres, reason, onClick }: MovieCardProps) {
   const isClickable = Boolean(id || onClick)
   const content = (
     <>
@@ -24,11 +25,15 @@ export default function MovieCard({ id, title, year, posterPath, rating, genres,
       <div style={{ aspectRatio: '2/3', background: 'var(--surface-2)', position: 'relative' }}>
         {posterPath ? (
           <Image
-            src={`${TMDB_IMAGE_BASE}${posterPath}`}
+            src={`${TMDB_POSTER_CARD_BASE}${posterPath}`}
             alt={title}
             fill
+            loading="lazy"
+            decoding="async"
+            quality={72}
+            // Cards render near 160-180px wide; w342 covers high-DPR screens without pulling w500 originals.
             style={{ objectFit: 'cover' }}
-            sizes="200px"
+            sizes="(max-width: 640px) 45vw, (max-width: 1120px) 22vw, 180px"
           />
         ) : (
           <div style={{
@@ -108,3 +113,5 @@ export default function MovieCard({ id, title, year, posterPath, rating, genres,
     </div>
   )
 }
+
+export default memo(MovieCard)
